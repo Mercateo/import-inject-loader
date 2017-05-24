@@ -21,8 +21,14 @@
   ],
   "author": "Mercateo",
   "license": "Apache-2.0",
+  "devDependencies": {
+    "@mercateo/ws": "^1.0.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Mercateo/import-inject-loader"
+  },
   "dependencies": {
-    "@mercateo/ws": "^1.0.2",
     "babel-core": "^6.24.1",
     "babel-traverse": "^6.24.1",
     "babylon": "^6.17.1",
