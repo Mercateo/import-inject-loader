@@ -1,0 +1,31 @@
+{
+  "name": "import-inject-loader",
+  "version": "0.0.1",
+  "description": "This webpack loader replaces imports by own implementations and is especially suitable for testing and mocking dependencies.",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "ws b"
+  },
+  "ws": {
+    "type": "node",
+    "targets": {
+      "node": "current"
+    }
+  },
+  "keywords": [
+    "webpack",
+    "loader",
+    "testing",
+    "mocking",
+    "imports"
+  ],
+  "author": "Mercateo",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@mercateo/ws": "^1.0.2",
+    "babel-core": "^6.24.1",
+    "babel-traverse": "^6.24.1",
+    "babylon": "^6.17.1",
+    "loader-utils": "^1.1.0"
+  }
+}
