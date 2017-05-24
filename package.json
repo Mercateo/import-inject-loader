@@ -1,6 +1,6 @@
 {
   "name": "import-inject-loader",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "This webpack loader replaces imports by own implementations and is especially suitable for testing and mocking dependencies.",
   "main": "src/index.js",
   "scripts": {
