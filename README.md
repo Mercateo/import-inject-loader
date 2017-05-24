@@ -8,11 +8,13 @@ This can make testing classes easier by mocking used libraries with predefined r
 To use the import-inject-loader, simply add the loader to your import and specify the names of imported objects you'd like to replace in a comma separated list:
 
 ```js
-const { CompOne, ilOverwriteDefaultAdd, ilDefaultMultiply } = require('../import-inject-loader?defaultAdd,defaultMultiply!../src/component-one');
+const { CompOne, ilOverwriteDefaultAdd, ilOverwriteDefaultMultiply } = require('../import-inject-loader?defaultAdd,defaultMultiply!../src/component-one');
 ```
 
 The methods to overwrite the implementation will be called `ilOverwrite{NAME}`.
-You can simply call these functions and pass the new implementation with the same type like the old implementation.
+Note that we currently use the prefix `il` to avoid possible naming conflicts with existing variables called `Overwrite{NAME}`.
+
+You can simply call these functions and pass the new implementation with the same type as used in the old implementation.
 
 ```js
 ilOverwriteDefaultAdd(function(a, b) {
@@ -30,12 +32,17 @@ ilOverwriteFetch((url) => {
 ```
 ## Resetting overwrites
 
-To reset the overwritten implementation and use the default one again, simply call resetAllInjects(). This will reset all overwrites for this file.
-If the import-inject-loader is used in multiple imports in one file, you'll need to define them with separate names as show in the example:
+To reset the overwritten implementation and use the default one again, simply call `ilResetAll()`. This will reset all overwrites for this file.
+If the import-inject-loader is used in multiple imports in one file, you'll need to define them with separate names as shown in the example:
 
 ```js
-const { CompOne, ilOverwriteDefaultAdd, resetAllInjects: resetAllInAdd } = require('../import-inject-loader?defaultAdd!../src/component-one');
-const { CompTwo, ilOverwriteFetch, resetAllInjects: resetAllInFetchUser } = require('../import-inject-loader?fetch!../src/component-two');
+const { CompOne, ilOverwriteDefaultAdd, ilResetAll: resetAllInAdd } = require('../import-inject-loader?defaultAdd!../src/component-one');
+const { CompTwo, ilOverwriteFetch, ilResetAll: resetAllInFetchUser } = require('../import-inject-loader?fetch!../src/component-two');
+
+...
+
+resetAllInFetchUser();
+resetAllInAdd();
 ```
 
 ## Example

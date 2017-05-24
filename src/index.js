@@ -38,7 +38,7 @@ module.exports = function (contentStr, sourceMap) {
 
 function replaceKeyByInject(key, ast, resourcePath) {
   if (!fileUsesImport(ast, key)) {
-    console.warn(`Import ${key} in "${resourcePath}" is not defined. If this is not global, this import is unknown!`);
+    console.warn(`Import "${key}" in "${resourcePath}" is not defined. If this is not global, this import is unknown!`);
   }
 
   const {
@@ -66,8 +66,6 @@ function getVariableNames(key) {
 }
 
 function addResetFunction(ast, imports) {
-  const resetMethodName = 'resetAllInjects';
-
   const expressionStatements = imports.map(importName => {
     const { defaultName, usedName } = getVariableNames(importName);
 
@@ -96,7 +94,7 @@ function addResetFunction(ast, imports) {
       type: 'FunctionDeclaration',
       id: {
         type: 'Identifier',
-        name: resetMethodName
+        name: 'ilResetAll'
       },
       generator: false,
       expression: false,
