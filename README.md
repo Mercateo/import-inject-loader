@@ -9,7 +9,6 @@ To use the import-inject-loader, simply add the loader to your import and specif
 
 ```js
 const { CompOne, ilOverwriteDefaultAdd, ilDefaultMultiply } = require('../import-inject-loader?defaultAdd,defaultMultiply!../src/component-one');
-const { CompTwo, ilOverwriteFetch } = require('../import-inject-loader?fetch!../src/component-two');
 ```
 
 The methods to overwrite the implementation will be called `ilOverwrite{NAME}`.
@@ -35,8 +34,8 @@ To reset the overwritten implementation and use the default one again, simply ca
 If the import-inject-loader is used in multiple imports in one file, you'll need to define them with separate names as show in the example:
 
 ```js
-const { Add, ilOverwriteDefaultAdd, resetAllInjects: resetAllInAdd } = require('../import-inject-loader?defaultAdd!../src/component-one');
-const { FetchUser, ilOverwriteFetch, resetAllInjects: resetAllInFetchUser } = require('../import-inject-loader?fetch!../src/component-two');
+const { CompOne, ilOverwriteDefaultAdd, resetAllInjects: resetAllInAdd } = require('../import-inject-loader?defaultAdd!../src/component-one');
+const { CompTwo, ilOverwriteFetch, resetAllInjects: resetAllInFetchUser } = require('../import-inject-loader?fetch!../src/component-two');
 ```
 
 ## Example
