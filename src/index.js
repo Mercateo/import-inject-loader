@@ -3,16 +3,13 @@ const babylon = require('babylon');
 const babel = require('babel-core');
 const traverse = require('babel-traverse');
 
+const loaderPrefix = 'il';
+
 module.exports = function (contentStr, sourceMap) {
   const options = loaderUtils.parseQuery(this.query);
-  const resourcePath = this.resourcePath;
-
-  if (options === null || options === undefined) {
-    console.error('No options specified: Use "import-inject-loader?fieldA,fieldB!../file"');
-    return contentStr;
+  if (!options) {
+    throw new Error('No options specified! Use "import-inject-loader?fieldA,fieldB!../file"');
   }
-
-  const imports = Object.keys(options);
 
   // parse AST
   const ast = babylon.parse(contentStr, {
@@ -23,9 +20,8 @@ module.exports = function (contentStr, sourceMap) {
   });
 
   // replace imports by custom import which can be overwritten
-  imports.forEach(
-    key => replaceKeyByInject(key, ast, resourcePath)
-  );
+  const imports = Object.keys(options);
+  imports.forEach(key => replaceKeyByInject(key, ast));
 
   // export method to reset all overwritten imports
   addResetFunction(ast, imports);
@@ -36,9 +32,9 @@ module.exports = function (contentStr, sourceMap) {
     + '\n// END-import-inject-loader';
 };
 
-function replaceKeyByInject(key, ast, resourcePath) {
-  if (!fileUsesImport(ast, key)) {
-    console.warn(`Import "${key}" in "${resourcePath}" is not defined. If this is not global, this import is unknown!`);
+function replaceKeyByInject(key, ast) {
+  if (!fileUsesIdentifier(ast, key)) {
+    throw new Error(`Identifier "${key}" is not used.`);
   }
 
   const {
@@ -56,8 +52,6 @@ function replaceKeyByInject(key, ast, resourcePath) {
 }
 
 function getVariableNames(key) {
-  const loaderPrefix = 'il';
-
   return {
     overwriteMethodName: loaderPrefix + 'Overwrite' + capitalizeFirstLetter(key),
     usedName: loaderPrefix + capitalizeFirstLetter(key),
@@ -94,7 +88,7 @@ function addResetFunction(ast, imports) {
       type: 'FunctionDeclaration',
       id: {
         type: 'Identifier',
-        name: 'ilResetAll'
+        name: loaderPrefix + 'ResetAll'
       },
       generator: false,
       expression: false,
@@ -110,18 +104,18 @@ function addResetFunction(ast, imports) {
   });
 }
 
-function fileUsesImport(ast, key) {
-  let foundImportUsage = false;
+function fileUsesIdentifier(ast, key) {
+  let foundIdentifier = false;
 
   traverse.default(ast, {
     enter(path) {
-      if (path.node.type === 'ImportSpecifier' && path.node.local.name === key) {
-        foundImportUsage = true;
+      if (path.node.type === 'Identifier' && path.node.name === key) {
+        foundIdentifier = true;
       }
     }
   });
 
-  return foundImportUsage;
+  return foundIdentifier;
 }
 
 function replaceImportUsages(ast, key, overwrittenName) {
@@ -135,49 +129,48 @@ function replaceImportUsages(ast, key, overwrittenName) {
 }
 
 function addExportedOverwriteMethod(ast, overwriteMethodName, usedName) {
-  ast.program.body.push(
-    {
-      type: 'ExportNamedDeclaration',
-      specifiers: [],
-      source: null,
-      declaration: {
-        type: 'FunctionDeclaration',
-        id: {
+  ast.program.body.push({
+    type: 'ExportNamedDeclaration',
+    specifiers: [],
+    source: null,
+    declaration: {
+      type: 'FunctionDeclaration',
+      id: {
+        type: 'Identifier',
+        name: overwriteMethodName
+      },
+      generator: false,
+      expression: false,
+      async: false,
+      params: [
+        {
           type: 'Identifier',
-          name: overwriteMethodName
-        },
-        generator: false,
-        expression: false,
-        async: false,
-        params: [
+          name: 'paramOverwrite'
+        }
+      ],
+      body: {
+        type: 'BlockStatement',
+        body: [
           {
-            type: 'Identifier',
-            name: 'paramOverwrite'
-          }
-        ],
-        body: {
-          type: 'BlockStatement',
-          body: [
-            {
-              type: 'ExpressionStatement',
-              expression: {
-                type: 'AssignmentExpression',
-                operator: '=',
-                left: {
-                  type: 'Identifier',
-                  name: usedName
-                },
-                right: {
-                  type: 'Identifier',
-                  name: 'paramOverwrite'
-                }
+            type: 'ExpressionStatement',
+            expression: {
+              type: 'AssignmentExpression',
+              operator: '=',
+              left: {
+                type: 'Identifier',
+                name: usedName
+              },
+              right: {
+                type: 'Identifier',
+                name: 'paramOverwrite'
               }
             }
-          ]
-        }
-      },
-      exportKind: 'value'
-    });
+          }
+        ]
+      }
+    },
+    exportKind: 'value'
+  });
 }
 
 function addOverwriteDeclarationField(ast, key, overwrittenName) {
