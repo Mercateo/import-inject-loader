@@ -8,7 +8,7 @@ const loaderPrefix = 'il';
 module.exports = function (contentStr, sourceMap) {
   const options = loaderUtils.parseQuery(this.query);
   if (!options) {
-    throw new Error('No options specified for import-inject-loader! If you want to use this loader you need to pass names of imported or globals variables you want to overwrite in this way: "import-inject-loader?fieldA,fieldB!../your-file".');
+    throw new Error('No options specified! Use "import-inject-loader?fieldA,fieldB!../file"');
   }
 
   // parse AST
@@ -21,7 +21,7 @@ module.exports = function (contentStr, sourceMap) {
 
   // replace imports by custom import which can be overwritten
   const imports = Object.keys(options);
-  imports.forEach(key => replaceKeyByInject(key, ast, this.resourcePath));
+  imports.forEach(key => replaceKeyByInject(key, ast));
 
   // export method to reset all overwritten imports
   addResetFunction(ast, imports);
@@ -32,9 +32,9 @@ module.exports = function (contentStr, sourceMap) {
     + '\n// END-import-inject-loader';
 };
 
-function replaceKeyByInject(key, ast, resourcePath) {
+function replaceKeyByInject(key, ast) {
   if (!fileUsesIdentifier(ast, key)) {
-    throw new Error(`It looks like you want to overwrite an imported or global variable called "${key}", but "${key}" can't be found inside "${resourcePath}".`);
+    throw new Error(`Identifier "${key}" is not used.`);
   }
 
   const {
