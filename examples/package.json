@@ -1,0 +1,17 @@
+{
+  "name": "examples-for-import-inject-loader",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "webpack --hide-modules && mocha dist-tests/unit.js"
+  },
+  "devDependencies": {
+    "expect": "^1.20.2",
+    "import-inject-loader": "file:../",
+    "mocha": "^3.4.2",
+    "webpack": "^2.6.1"
+  },
+  "dependencies": {
+    "rfnd-hello-world": "^1.0.0"
+  }
+}

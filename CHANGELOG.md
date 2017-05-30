@@ -1,5 +1,11 @@
 The changelog is currently handwritten.
 
+# HEAD
+
+- Use `dist/index.js` instead of `src/index.js`.
+- Enhanced error messages.
+- Added test/examples.
+
 # 0.2.1 (2017-05-29)
 
 - Unknown identifiers now throw an error.

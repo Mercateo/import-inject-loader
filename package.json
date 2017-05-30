@@ -1,10 +1,11 @@
 {
   "name": "import-inject-loader",
   "version": "0.2.1",
-  "description": "This webpack loader replaces imports by own implementations and is especially suitable for testing and mocking dependencies.",
-  "main": "src/index.js",
+  "description": "This webpack loader allows you to overwrite dependencies by own implementations for testing purposes.",
+  "main": "dist/index.js",
   "scripts": {
-    "build": "ws b"
+    "build": "ws build",
+    "test": "npm run build && node tests"
   },
   "ws": {
     "type": "node",
