@@ -1,50 +1,124 @@
+> Overwrite your dependencies with mocks and custom implementations.
+
 # Description
 
-import-inject-loader is a webpack loader allowing you to replace imported dependencies by custom implementations during buildtime.
-This can make testing classes easier by mocking used libraries with predefined results.
+`import-inject-loader` is a webpack loader which allows you to replace imported dependencies and global variables by custom implementations. At build time new exported functions are added to your module which makes it possible to change implementations at run time (e.g. within tests).
 
 # Usage
-## Defining overwrites
-To use the import-inject-loader, simply add the loader to your import and specify the names of imported objects you'd like to replace in a comma separated list:
+
+Imagine we have this module and want to mock `fetch` in our unit test:
 
 ```js
-const { CompOne, ilOverwriteDefaultAdd, ilOverwriteDefaultMultiply } = require('../import-inject-loader?defaultAdd,defaultMultiply!../src/component-one');
+export const getUsers = async () => {
+  const response = await fetch('https://jsonplaceholder.typicode.com/users');
+  return response.json();
+};
 ```
 
-The methods to overwrite the implementation will be called `ilOverwrite{NAME}`.
-Note that we currently use the prefix `il` to avoid possible naming conflicts with existing variables called `Overwrite{NAME}`.
-
-You can simply call these functions and pass the new implementation with the same type as used in the old implementation.
+We can do it like this:
 
 ```js
-ilOverwriteDefaultAdd(function(a, b) {
-    return a + b;
-});
+import expect from 'expect';
+import {
+  getUsers,
+  ilOverwriteFetch,
+  ilResetAll
+} from 'import-inject-loader?fetch!../src/get-users';
 
-ilOverwriteFetch((url) => {
-  return new Promise((resolve, reject) => {
-    resolve({
-      ok: true,
-      json: async () => [{ name: 'Mocked Foo Bar' }]
-    })
+define('Test getUsers()', () => {
+  it('should return users', async () => {
+    // mock `fetch`
+    ilOverwriteFetch((url) => ({
+      json: [
+        { name: 'John Doe' }
+      ]
+    }));
+
+    // test `getUsers`
+    const users = await getUsers();
+    expect(users).toEqual([
+      { name: 'John Doe' }
+    ]);
   });
+
+  afterEach(ilResetAll);
 });
 ```
-## Resetting overwrites
 
-To reset the overwritten implementation and use the default one again, simply call `ilResetAll()`. This will reset all overwrites for this file.
-If the import-inject-loader is used in multiple imports in one file, you'll need to define them with separate names as shown in the example:
+# Explanation
+
+The `getUsers` function is hard to test, because it requires a network request. With `import-inject-loader` we can mock `fetch` to get rid of the network request.
+
+To do so we simply import our module with the `import-inject-loader` and specify the names of imported or global variables we'd like to replace in a comma separated list:
 
 ```js
-const { CompOne, ilOverwriteDefaultAdd, ilResetAll: resetAllInAdd } = require('../import-inject-loader?defaultAdd!../src/component-one');
-const { CompTwo, ilOverwriteFetch, ilResetAll: resetAllInFetchUser } = require('../import-inject-loader?fetch!../src/component-two');
-
-...
-
-resetAllInFetchUser();
-resetAllInAdd();
+import {
+  getUsers,
+  ilOverwriteFetch,
+  ilResetAll
+} from 'import-inject-loader?fetch!../src/get-users';
 ```
 
-## Example
+You can see that two new functions are exported from `../src/get-users`: `ilOverwriteFetch` and `ilResetAll`.
 
-For more information, have a look into [Frontend Unit Tests Example](https://github.com/Mercateo/frontend-unit-tests-examples) to see how we use it there.
+`ilOverwriteFetch` is exported, because we passed `?fetch` to the `import-inject-loader`. If we would pass `?fetch,Math,localStorage` the function `ilOverwriteFetch`, `ilOverwriteMath` and `ilOverwriteLocalStorage` would be exported (assuming all three variables are actually used in the file). If you pass `?fatch` - which is a typo - an error is thrown, because no `fatch` is used inside `../src/get-users`. The `ilOverwrite{Name}` functions allow you to swap out imported or global variables with own implementations.
+
+The `ilResetAll` is _always_ exported. It is a handy way to reset your custom implementations with the original implementation after your test is done.
+
+Note that you only change the implementation of `fetch` _within_ this one module. Other modules aren't affect and the global `fetch` on `window` isn't changed.
+
+The `import-inject-loader` _basically_ rewrites your module to something like this (not exactly, but you get the point):
+
+```js
+let fetch = window.fetch;
+
+export const ilOverwriteFetch = (newFetch) => fetch = newFetch;
+export const ilResetAll = () => fetch = window.fetch;
+
+export const getUsers = async () => {
+  const response = await fetch('https://jsonplaceholder.typicode.com/users');
+  return response.json();
+};
+```
+
+As explained this functionallity is not limited to global variables. You can also mock imported variables. Say you have another module which uses our `getUsers` like this:
+
+```js
+import { getUsers } from './get-users';
+
+export countUsers = async () => {
+  const users = await getUsers();
+  return users.length;
+};
+```
+
+We can test `countUsers` like this:
+
+```js
+import {
+  countUsers,
+  ilOverwriteGetUsers,
+  ilResetAll
+} from 'import-inject-loader?getUsers!../src/count-users';
+
+define('Test countUsers()', () => {
+  it('should return users', async () => {
+    // mock `getUsers`
+    ilOverwriteGetUsers(() => [
+      { name: 'John Doe' }
+    ]);
+
+    // test `countUsers`
+    const count = await countUsers();
+    expect(users).toBe(1);
+  });
+
+  afterEach(ilResetAll);
+});
+```
+
+# Examples
+
+You can check out a standalone example with all source and test files in our [`examples/` directory](./examples).
+
+Another example which uses React, TypeScript and JSX can be found [here](https://github.com/Mercateo/frontend-unit-tests-examples).
