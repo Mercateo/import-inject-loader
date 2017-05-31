@@ -13,5 +13,4 @@ cache:
 
 script:
   - npm run -s build
-  - npm run -s ws lint
   - npm run test
