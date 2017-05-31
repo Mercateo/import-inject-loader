@@ -1,0 +1,17 @@
+sudo: false
+
+language: node_js
+
+node_js:
+  - "7"
+  - "6"
+
+cache:
+  yarn: true
+  directories:
+    - node_modules
+
+script:
+  - npm run -s build
+  - npm run -s ws lint
+  - npm run test
