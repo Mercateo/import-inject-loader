@@ -1,6 +1,6 @@
 The changelog is currently handwritten.
 
-# HEAD
+# 0.2.2 (2017-05-31)
 
 - Use `dist/index.js` instead of `src/index.js`.
 - Added test/examples.
