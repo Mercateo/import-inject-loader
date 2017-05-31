@@ -1,6 +1,6 @@
 {
   "name": "import-inject-loader",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "This webpack loader allows you to overwrite dependencies by own implementations for testing purposes.",
   "main": "dist/index.js",
   "scripts": {
