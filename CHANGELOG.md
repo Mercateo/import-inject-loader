@@ -1,5 +1,9 @@
 The changelog is currently handwritten.
 
+# 0.2.3 (2017-06-01)
+
+- Just a test for a release done by Travis.
+
 # 0.2.2 (2017-05-31)
 
 - Use `dist/index.js` instead of `src/index.js`.
