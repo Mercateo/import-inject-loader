@@ -1,5 +1,6 @@
 The changelog is currently handwritten.
 
+# 0.2.4 (2017-06-01)
 # 0.2.3 (2017-06-01)
 
 - Just a test for a release done by Travis.
