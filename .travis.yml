@@ -1,0 +1,25 @@
+sudo: false
+
+language: node_js
+
+node_js:
+  - "7"
+  - "6"
+
+cache:
+  yarn: true
+  directories:
+    - node_modules
+
+script:
+  - npm run -s build
+  - npm run test
+
+deploy:
+  provider: npm
+  api_key:
+    secure: hImWpJVtbtKfvvRsb4igsMn95vu9avAPEbStoR9EeUjc1NJtcgi6idChoJMT1U9V2yxg2DQNBQ8RVYsE65F0Gu/1aEta6gL7EzlZuNRCfN8y5W3xonXFQd068Xkkty+ZmWdY8VHgzfv6cyKAJnZbjSuymn/jfQAZ97DlVCeRF7nl8iicov3520/dhAvKOOb3jRSk2yd7knA1nVjKAeLiiX6hpZ0xotmzHT6vWw+r8NZJ/ak2/x2RSGYQ9w0TUuaf8akLqAtYbD32C7Seh5MxZ2AtivT/dtWG2uQsEMU/4DyylRb35HmetKdXJTXVphtaVZgP8prpzfvBZPL8EsG4mexH/yFMaHt+qC5KOQupWnQYX+rX+wob1IMxWxy5E8rFneEiDYbpQultRiFBKcNCLDRqnnCn9eXU28LlAqUZXnZCOJ9w4l2Gpsxprc7jbQA6ykHjwHd5bfr4fF4G9aTglAzn1WCWAjntIlNkTti3AWapmPTrR9aIwOzBxFWFAB4MdyOghYmV+dPmZ/Kjktj/Ot5f4556OjHDDhqIfp//BmmDAH/f0OtDbGatQk4TQo71FpOWBjE4aBvFgCMhtoguozEWotYuDANtlX4KInh9QzFyzTmWkkxP4fp46pT2V8ObW6OD+YH+lQTbncl5qQHS/ZE45HZSpaGfE5NOXNzdTj8=
+  on:
+    tags: true
+    branch: master
+  skip_cleanup: true

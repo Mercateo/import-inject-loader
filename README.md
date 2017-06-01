@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/Mercateo/import-inject-loader.svg?branch=master)](https://travis-ci.org/Mercateo/import-inject-loader)
+
 > Overwrite your dependencies with mocks and custom implementations.
 
 # Description
