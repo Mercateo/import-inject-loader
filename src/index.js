@@ -43,10 +43,10 @@ function replaceKeyByInject(key, ast) {
     defaultName
   } = getVariableNames(key);
 
-  replaceImportUsages(ast, key, usedName);
-  addExportedOverwriteMethod(ast, overwriteMethodName, usedName);
   addOverwriteDeclarationField(ast, key, usedName);
   addDefaultDeclarationField(ast, key, defaultName);
+  replaceImportUsages(ast, key, usedName);
+  addExportedOverwriteMethod(ast, overwriteMethodName, usedName);
 
   return ast;
 }
