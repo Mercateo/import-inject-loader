@@ -6,6 +6,7 @@ const traverse = require('babel-traverse');
 const loaderPrefix = 'il';
 
 module.exports = function (contentStr, sourceMap) {
+  // { [identifier: string]: true }
   const options = loaderUtils.parseQuery(this.query);
   if (!options) {
     throw new Error('No options specified! Use "import-inject-loader?fieldA,fieldB!../file"');
@@ -19,51 +20,66 @@ module.exports = function (contentStr, sourceMap) {
     ]
   });
 
-  // replace imports by custom import which can be overwritten
-  const imports = Object.keys(options);
-  imports.forEach(key => replaceKeyByInject(key, ast));
+  // replace variables names (= identifiers) which should be injectable
+  // string[]
+  const identifiers = Object.keys(options);
+  identifiers.forEach(identifier => makeIdentifierInjectable(identifier, ast));
 
   // export method to reset all overwritten imports
-  addResetFunction(ast, imports);
+  addResetFunction(ast, identifiers);
 
   // return converted AST
+  const { code } = babel.transformFromAst(ast);
+
+  //console.log('\n---\n' + code + '\n---\n');
   return '// BEGIN-import-inject-loader\n'
-    + babel.transformFromAst(ast).code
+    + code
     + '\n// END-import-inject-loader';
 };
 
-function replaceKeyByInject(key, ast) {
-  if (!fileUsesIdentifier(ast, key)) {
-    throw new Error(`Identifier "${key}" is not used.`);
+function makeIdentifierInjectable(identifier, ast) {
+  if (!isIdentifierUsed(ast, identifier)) {
+    throw new Error(`Identifier "${identifier}" is not used. Maybe you misspelled the identifier.`);
   }
 
   const {
     overwriteMethodName,
     usedName,
-    defaultName
-  } = getVariableNames(key);
+    originalReferenceName
+  } = getVariableNames(identifier);
 
-  replaceImportUsages(ast, key, usedName);
+  let lastImport = 0;
+  let node = ast.program.body[lastImport];
+  while (node.type === 'ImportDeclaration') {
+    lastImport += 1;
+    node = ast.program.body[lastImport];
+  }
+
+  replaceUsages(ast, identifier, usedName); // needed?
   addExportedOverwriteMethod(ast, overwriteMethodName, usedName);
-  addOverwriteDeclarationField(ast, key, usedName);
-  addDefaultDeclarationField(ast, key, defaultName);
+  addOverwritableVariable(ast, identifier, usedName, lastImport);
+  addReferenceToOriginalValue(ast, identifier, originalReferenceName, lastImport);
 
   return ast;
 }
 
-function getVariableNames(key) {
+function getVariableNames(identifier) {
+  const capitalizedIdentifier = capitalizeFirstLetter(identifier);
   return {
-    overwriteMethodName: loaderPrefix + 'Overwrite' + capitalizeFirstLetter(key),
-    usedName: loaderPrefix + capitalizeFirstLetter(key),
-    defaultName: loaderPrefix + 'Default' + capitalizeFirstLetter(key)
+    // call this method to overwrite the value stored in `usedName`
+    overwriteMethodName: loaderPrefix + 'Overwrite' + capitalizedIdentifier,
+    // this is the name of the variable in all used places (why change this?)
+    usedName: loaderPrefix + capitalizedIdentifier,
+    // this variable stores a reference to the original value
+    originalReferenceName: loaderPrefix + 'Original' + capitalizedIdentifier
   }
 }
 
-function addResetFunction(ast, imports) {
-  const expressionStatements = imports.map(importName => {
-    const { defaultName, usedName } = getVariableNames(importName);
+function addResetFunction(ast, identifiers) {
+  const expressionStatements = identifiers.map(identifier => {
+    const { originalReferenceName, usedName } = getVariableNames(identifier);
 
-    return ({
+    return {
       type: 'ExpressionStatement',
       expression: {
         type: 'AssignmentExpression',
@@ -74,10 +90,10 @@ function addResetFunction(ast, imports) {
         },
         right: {
           type: 'Identifier',
-          name: defaultName
+          name: originalReferenceName
         }
       }
-    });
+    };
   });
 
   ast.program.body.push({
@@ -104,12 +120,12 @@ function addResetFunction(ast, imports) {
   });
 }
 
-function fileUsesIdentifier(ast, key) {
+function isIdentifierUsed(ast, identifier) {
   let foundIdentifier = false;
 
   traverse.default(ast, {
     enter(path) {
-      if (path.node.type === 'Identifier' && path.node.name === key) {
+      if (path.node.type === 'Identifier' && path.node.name === identifier) {
         foundIdentifier = true;
       }
     }
@@ -118,10 +134,10 @@ function fileUsesIdentifier(ast, key) {
   return foundIdentifier;
 }
 
-function replaceImportUsages(ast, key, overwrittenName) {
+function replaceUsages(ast, identifier, overwrittenName) {
   traverse.default(ast, {
     enter(path) {
-      if (path.node.type === 'Identifier' && path.node.name === key && path.parent.type !== 'ImportSpecifier') {
+      if (path.node.type === 'Identifier' && path.node.name === identifier && path.parent.type !== 'ImportSpecifier') {
         path.node.name = overwrittenName;
       }
     }
@@ -145,7 +161,7 @@ function addExportedOverwriteMethod(ast, overwriteMethodName, usedName) {
       params: [
         {
           type: 'Identifier',
-          name: 'paramOverwrite'
+          name: 'value'
         }
       ],
       body: {
@@ -162,7 +178,7 @@ function addExportedOverwriteMethod(ast, overwriteMethodName, usedName) {
               },
               right: {
                 type: 'Identifier',
-                name: 'paramOverwrite'
+                name: 'value'
               }
             }
           }
@@ -173,16 +189,16 @@ function addExportedOverwriteMethod(ast, overwriteMethodName, usedName) {
   });
 }
 
-function addOverwriteDeclarationField(ast, key, overwrittenName) {
-  addVariable(ast, overwrittenName, key);
+function addOverwritableVariable(ast, identifier, usedName, nodeIndex) {
+  addVariable(ast, usedName, identifier, nodeIndex);
 }
 
-function addDefaultDeclarationField(ast, key, defaultName) {
-  addVariable(ast, defaultName, key);
+function addReferenceToOriginalValue(ast, key, originalReferenceName, nodeIndex) {
+  addVariable(ast, originalReferenceName, key, nodeIndex);
 }
 
-function addVariable(ast, name, value) {
-  ast.program.body.unshift({
+function addVariable(ast, name, value, nodeIndex) {
+  ast.program.body.splice(nodeIndex, 0, {
     type: 'VariableDeclaration',
     declarations: [
       {

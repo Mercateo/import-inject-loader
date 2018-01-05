@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "ws build",
-    "test": "npm run build && node tests"
+    "test": "yarn build && node tests"
   },
   "ws": {
     "type": "node",

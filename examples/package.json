@@ -7,7 +7,7 @@
   },
   "devDependencies": {
     "expect": "^1.20.2",
-    "import-inject-loader": "file:../",
+    "import-inject-loader": "link:../",
     "mocha": "^3.4.2",
     "webpack": "^2.6.1"
   },
