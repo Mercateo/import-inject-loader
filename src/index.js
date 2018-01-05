@@ -31,7 +31,7 @@ module.exports = function (contentStr, sourceMap) {
   // return converted AST
   const { code } = babel.transformFromAst(ast);
 
-  console.log('\n---\n' + code + '\n---\n');
+  //console.log('\n---\n' + code + '\n---\n');
   return '// BEGIN-import-inject-loader\n'
     + code
     + '\n// END-import-inject-loader';
