@@ -1,3 +1,5 @@
+This project is unmantained, deprecated and goes to archive with followup removal in 2 years.
+
 [![Build Status](https://travis-ci.org/Mercateo/import-inject-loader.svg?branch=master)](https://travis-ci.org/Mercateo/import-inject-loader)
 
 > Overwrite your dependencies with mocks and custom implementations.
